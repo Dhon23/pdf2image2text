@@ -21,7 +21,7 @@ const convertToNumber = (str) => {
 
   const dirPath = baseDir + "/" + findDir;
   const readDir = fs.readdirSync(dirPath);
-  const findSprDoc = readDir.find((el) => el.match(/(spr|SPR|Spr)/));
+  const findSprDoc = readDir.find((el) => el.match(/(spr|SPR|Spr)/) && el.match(/pdf$/));
   const sprDocPath = dirPath + "/" + findSprDoc;
 
   if (!findSprDoc) return console.log("Tidak menemukan file SPR");
@@ -66,7 +66,7 @@ const convertToNumber = (str) => {
       const config = {
         lang: "ind",
         oem: 1,
-        psm: 3,
+        psm: 6,
       };
 
       const tres = await tesseract.recognize(imagePath, config);
