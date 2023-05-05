@@ -4,8 +4,11 @@ import clipboard from "clipboardy";
 import tesseract from "node-tesseract-ocr";
 import { PDFImage } from "pdf-image";
 import Jimp from "jimp";
+import ora from "ora";
 
 const inputName = process.argv[2];
+
+const spinner = ora("Loading...");
 
 const convertToNumber = (str) => {
   const num = +str.replace(/[^0-9]+/g, "").replace(/,/g, "");
@@ -21,11 +24,15 @@ const convertToNumber = (str) => {
 
   const dirPath = baseDir + "/" + findDir;
   const readDir = fs.readdirSync(dirPath);
-  const findSprDoc = readDir.find((el) => el.match(/(spr|SPR|Spr)/) && el.match(/pdf$/));
+  const findSprDoc = readDir.find(
+    (el) => el.match(/(spr|SPR|Spr)/) && el.match(/pdf$/)
+  );
   const sprDocPath = dirPath + "/" + findSprDoc;
 
   if (!findSprDoc) return console.log("Tidak menemukan file SPR");
   console.log(findSprDoc);
+
+  spinner.start();
 
   let stringPdf = await new Promise((resolve, reject) => {
     let text = [];
@@ -50,35 +57,51 @@ const convertToNumber = (str) => {
     });
   }).catch((err) => console.log("ERROR:", err));
 
+  if (stringPdf.length) spinner.succeed("Success convert pdf to text");
+
   if (!stringPdf.length) {
+    spinner.fail("Convert pdf to text failed, try convert to image first");
     try {
+      spinner.start();
+      
       const pdfImage = new PDFImage(sprDocPath, {
         convertOptions: { "-density": 400 },
       });
       const imagePath = await pdfImage.convertPage(0);
       if (!fs.existsSync(imagePath)) throw "Image pdf not created";
-      console.log("success convert pdf to image");
+
+      spinner.succeed("Success convert pdf to image");
+      spinner.start();
+
       const jimpRead = await Jimp.read(imagePath);
       jimpRead.greyscale();
+      // jimpRead.brightness(-0.5)
+      // jimpRead.contrast(0.3);
       jimpRead.write(imagePath);
-      console.log("success convert image to grayscale");
+
+      spinner.succeed("Success convert image to grayscale");
+      spinner.start();
 
       const config = {
         lang: "ind",
         oem: 1,
         psm: 6,
       };
-
       const tres = await tesseract.recognize(imagePath, config);
       fs.unlinkSync(imagePath);
-      stringPdf = tres.split("\n").map((el) => el.replace(/\s/g, ""));
-      console.log(stringPdf);
+      stringPdf = tres
+        .replace(/(\||\—)/g, "")
+        .split("\n")
+        .map((el) => el.replace(/\s/g, ""));
 
-      console.log("Success convert pdf image to text");
+      spinner.succeed("Success convert pdf image to text");
     } catch (error) {
+      spinner.fail();
       console.log(error.message || error);
     }
   }
+
+  // console.log(stringPdf);
 
   const obj = {};
   const regex = /([^:]+):(.+)/;
@@ -128,5 +151,8 @@ const convertToNumber = (str) => {
   ].join("	");
   clipboard.writeSync(copyContent);
   clipboard.readSync();
-  console.log("coppied");
+  spinner.succeed("Success copied to your clipboard");
+  // console.log("coppied");
 })();
+
+spinner.stop();
