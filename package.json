@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "clipboardy": "^3.0.0",
+    "jimp": "^0.22.7",
     "node-tesseract-ocr": "^2.2.1",
     "pdf-image": "^2.0.0",
     "pdf-merger-js": "^4.3.0",

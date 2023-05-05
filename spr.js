@@ -3,6 +3,7 @@ import { PdfReader } from "pdfreader";
 import clipboard from "clipboardy";
 import tesseract from "node-tesseract-ocr";
 import { PDFImage } from "pdf-image";
+import Jimp from "jimp";
 
 const inputName = process.argv[2];
 
@@ -57,6 +58,10 @@ const convertToNumber = (str) => {
       const imagePath = await pdfImage.convertPage(0);
       if (!fs.existsSync(imagePath)) throw "Image pdf not created";
       console.log("success convert pdf to image");
+      const jimpRead = await Jimp.read(imagePath);
+      jimpRead.greyscale();
+      jimpRead.write(imagePath);
+      console.log("success convert image to grayscale");
 
       const config = {
         lang: "ind",
@@ -91,7 +96,7 @@ const convertToNumber = (str) => {
   const project = ["THELEAFRESIDENCETAHAP-ALAMANDA", "THELEAFRESIDENCETAHAPII"];
   if (project.includes(obj.NamaPerumahan)) obj.NamaPerumahan = "TLR2";
   obj.NoHP = obj.NoHP?.replace(/^0/, "62") || "";
-  obj.CaraPembayaran = obj.CaraPembayaran.replace(/Bank/, "");
+  obj.CaraPembayaran = obj.CaraPembayaran?.replace(/Bank/, "") || "";
   obj.Blok = obj.Blok?.replace(/\//, "0") || "";
 
   const {
