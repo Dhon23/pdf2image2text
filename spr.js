@@ -5,8 +5,11 @@ import tesseract from "node-tesseract-ocr";
 import { PDFImage } from "pdf-image";
 import Jimp from "jimp";
 import ora from "ora";
+import readline from "readline";
 
-const inputName = process.argv[2];
+const rl = readline.createInterface(process.stdin, process.stdout);
+
+// const inputName = process.argv[2];
 
 const spinner = ora("Loading...");
 
@@ -15,7 +18,7 @@ const convertToNumber = (str) => {
   return num;
 };
 
-(async () => {
+const main = async (inputName) => {
   const baseDir = "docs";
   const readBaseDir = fs.readdirSync(baseDir);
   const findDir = readBaseDir.find((el) => el.includes(inputName));
@@ -60,12 +63,13 @@ const convertToNumber = (str) => {
   if (stringPdf.length) spinner.succeed("Success convert pdf to text");
 
   if (!stringPdf.length) {
-    spinner.fail("Convert pdf to text failed, try convert to image first");
+    spinner.fail("Convert pdf to text failed. Try convert to image first");
     try {
       spinner.start();
-      
+
       const pdfImage = new PDFImage(sprDocPath, {
         convertOptions: { "-density": 400 },
+        outputDirectory: "temp",
       });
       const imagePath = await pdfImage.convertPage(0);
       if (!fs.existsSync(imagePath)) throw "Image pdf not created";
@@ -75,7 +79,8 @@ const convertToNumber = (str) => {
 
       const jimpRead = await Jimp.read(imagePath);
       jimpRead.greyscale();
-      // jimpRead.brightness(-0.5)
+      // jimpRead.rotate(-90)
+      // jimpRead.brightness(-0.3);
       // jimpRead.contrast(0.3);
       jimpRead.write(imagePath);
 
@@ -153,6 +158,13 @@ const convertToNumber = (str) => {
   clipboard.readSync();
   spinner.succeed("Success copied to your clipboard");
   // console.log("coppied");
-})();
+};
+
+rl.setPrompt(`Insert the name: \n`);
+rl.prompt();
+rl.on("line", async (input) => {
+  await main(input);
+  rl.close()
+});
 
 spinner.stop();
