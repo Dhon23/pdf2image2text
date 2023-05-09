@@ -37,7 +37,11 @@ function fileSizeMegaBytes(filename) {
     const match = /^(.*?)(?:_| )/.exec(file);
     const ext = file.match(/\.(\w+)$/)[1];
     if (match) {
-      const key = match[1] + "." + ext;
+      let fileName = "";
+      if (match[1].toLocaleLowerCase().match(/(ktp|npwp)/g))
+        fileName = match.input;
+      else fileName = match[1];
+      const key = fileName + "." + ext;
       if (!groups[key]) {
         groups[key] = [];
       }
@@ -81,7 +85,6 @@ function fileSizeMegaBytes(filename) {
       fs.readdir("temp", null, (err, files) => {
         files.forEach((el) => fs.unlinkSync("temp" + "/" + el));
       });
-
     } else {
       const filename = groups[key][0];
       const withoutExt = filename.replace(/\.[^.]+$/, "");
