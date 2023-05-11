@@ -3,6 +3,8 @@ import PDFMerger from "pdf-merger-js";
 import imgToPdf from "image-to-pdf";
 import Jimp from "jimp";
 
+const name = process.argv[2];
+
 const generateRandomStr = () => {
   const length = 16;
   const charset =
@@ -26,10 +28,14 @@ function fileSizeMegaBytes(filename) {
 }
 
 (async () => {
+  if (!name) return console.log("insert name");
   fs.readdir("output", null, (err, files) => {
     files.forEach((el) => fs.unlinkSync("output" + "/" + el));
   });
-  const files = fs.readdirSync("input");
+  const readDocs = fs.readdirSync("docs");
+  const findDir = readDocs.find((el) => el.includes(name));
+  const dirPath = "docs/" + findDir;
+  const files = fs.readdirSync(dirPath);
 
   const groups = {};
 
@@ -56,7 +62,7 @@ function fileSizeMegaBytes(filename) {
       const merger = new PDFMerger();
       for (const fileName of groups[key]) {
         if (fileName.match(/(.pdf)$/)) {
-          const fileBuffer = fs.readFileSync("input/" + fileName);
+          const fileBuffer = fs.readFileSync(dirPath + "/" + fileName);
           await merger.add(fileBuffer);
         }
       }
@@ -64,7 +70,7 @@ function fileSizeMegaBytes(filename) {
     } else if (groups[key].length > 1) {
       const withParent = await Promise.all(
         groups[key].map(async (el) => {
-          let filePath = "input/" + el;
+          let filePath = dirPath + "/" + el;
           if (fileSizeMegaBytes(filePath) > 0.8) {
             const out = "temp/" + el;
             const image = await Jimp.read(filePath);
@@ -90,7 +96,7 @@ function fileSizeMegaBytes(filename) {
       const withoutExt = filename.replace(/\.[^.]+$/, "");
       const ext = "." + filename.match(/\.([^.]+)$/)[1];
       fs.copyFileSync(
-        "input/" + filename,
+        dirPath + "/" + filename,
         "output/" + withoutExt + randomStr + ext
       );
     }

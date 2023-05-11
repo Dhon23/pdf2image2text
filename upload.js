@@ -36,7 +36,11 @@ const main = async (name) => {
 
     const { uploadRelativePath } = response || {};
 
-    if (uploadRelativePath) relativePaths.push(uploadRelativePath);
+    relativePaths.push(
+      uploadRelativePath ||
+        "cms/document-progress/" + name + "/" + fileName + "   (Rejected)"
+    );
+
     console.log(response?.uploadRelativePath || response);
   }
 
@@ -76,7 +80,7 @@ const copyContent = (relativePaths) => {
     rl.question(`${listFields[ix]}: `, (idx) => {
       if (idx) {
         idx -= 1;
-        listCopy.push(relativePaths?.[idx] || "");
+        listCopy.push(relativePaths?.[idx]?.replace("   (Rejected)", "") || "");
       } else {
         listCopy.push("");
       }
